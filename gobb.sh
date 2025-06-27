@@ -9,7 +9,6 @@ minify() {
 	local quote_char=""
 	local escaped=0
 	local prev_char=""
-	local brace_depth=0
 
 	while IFS= read -r -d '' -n1 -u 3 c; do
 		if (( in_quote )); then
@@ -42,7 +41,7 @@ minify() {
 				buffer+="$c"
 				;;
 			'#')
-				if [[ brace_depth -eq 0 ]]; then
+				if [[ $prev_char =~ [[:space:]] || $prev_char == "" ]]; then
 					while IFS= read -r -d '' -n1 -u 3 c && [[ $c != $'\n' ]]; do :; done
 					buffer+=$'\n'
 				else
@@ -58,14 +57,6 @@ minify() {
 					buffer+="$c"
 				fi
 				;;
-			"{")
-				[[ prev_char == "\$" ]] && ((brace_depth++))
-				buffer+="$c"
-				;;
-			"}")
-				((brace_depth--))
-				buffer+="$c"
-				;;
 			*)
 				buffer+="$c"
 				;;
@@ -79,7 +70,6 @@ minify() {
 
 	exec 3<&-
 }
-
 
 input="$1"
 cd "$(dirname "$input")" || exit 1
